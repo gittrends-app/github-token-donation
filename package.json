@@ -1,6 +1,6 @@
 {
   "name": "@gittrends-app/github-token-donation",
-  "version": "0.9.6",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
