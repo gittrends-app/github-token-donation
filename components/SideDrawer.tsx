@@ -46,7 +46,7 @@ export default function SideDrawer() {
         }}
       >
         <Image src="/images/logo-white.png" alt="Logo" width={80} height={80}></Image>
-        <Typography variant="h5" fontWeight="bold" pt={1} color="secondary" textAlign="center">
+        <Typography variant="h5" color="secondary" sx={{ fontWeight: "bold", pt: 1, textAlign: "center" }}>
           {process.env.NEXT_PUBLIC_NAME}
         </Typography>
       </Link>

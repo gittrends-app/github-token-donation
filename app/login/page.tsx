@@ -41,8 +41,8 @@ export default function LoginPage() {
       </Typography>
       <br />
       <Grid container spacing={2}>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}>
+        <Grid size={4} />
+        <Grid size={4}>
           <TextField
             id="user"
             fullWidth
@@ -53,9 +53,9 @@ export default function LoginPage() {
             }}
           />
         </Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}>
+        <Grid size={4} />
+        <Grid size={4} />
+        <Grid size={4}>
           <FormControl variant="filled" fullWidth>
             <InputLabel htmlFor="password">Password</InputLabel>
             <FilledInput
@@ -74,9 +74,9 @@ export default function LoginPage() {
             />
           </FormControl>
         </Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}>
+        <Grid size={4} />
+        <Grid size={4} />
+        <Grid size={4}>
           <Button
             variant="contained"
             fullWidth
@@ -90,7 +90,7 @@ export default function LoginPage() {
             Login
           </Button>
         </Grid>
-        <Grid item xs={4}></Grid>
+        <Grid size={4} />
       </Grid>
       <div>
         <br />

@@ -42,7 +42,7 @@ export default function AdminPage() {
         alignItems: "center",
       }}
     >
-      <Typography variant="h3" component="h3" color="primary">
+      <Typography variant="h3" color="primary">
         Tabela de tokens doados
       </Typography>
       <br />

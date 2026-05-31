@@ -36,12 +36,12 @@ export default function HomePage() {
           flexGrow: 1,
         }}
       >
-        <Typography variant="h3" component="h3" color="primary" fontWeight="bold">
+        <Typography variant="h3" color="primary" sx={{ fontWeight: "bold" }}>
           {process.env.NEXT_PUBLIC_TITLE}
         </Typography>
         <br />
         <br />
-        <Typography variant="h5" component="h5">
+        <Typography variant="h5">
           {process.env.NEXT_PUBLIC_MESSAGE}
         </Typography>
       </Box>

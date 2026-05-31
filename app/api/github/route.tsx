@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { MongoClient } from "mongodb";
 import { cookies } from "next/headers";
 import { omitBy } from "lodash";
+import { SMTPClient } from "emailjs";
 import { getGithubProfile } from "@/helpers/github";
 
 export interface GitHubUser {
@@ -19,31 +20,45 @@ export interface GitHubToken {
   donated_at: Date;
 }
 
-const client = new MongoClient(process.env.DB_URL + "");
+function getClient() {
+  return new MongoClient(process.env.DB_URL || "mongodb://localhost:27017");
+}
 
 export async function GET(req: NextRequest) {
-  var code = req.nextUrl.searchParams.get("code");
-  var token = req.nextUrl.searchParams.get("token");
+  try {
+    const code = req.nextUrl.searchParams.get("code");
+    let token = req.nextUrl.searchParams.get("token");
 
-  if (code) {
-    token = await fetch(
-      "https://github.com/login/oauth/access_token?" +
-        new URLSearchParams({
-          client_id: process.env.GH_CLIENT_ID as string,
-          client_secret: process.env.GH_CLIENT_SECRET as string,
-          code: code,
-        }).toString(),
-      {
-        method: "POST",
-        headers: { Accept: "application/json" },
-      },
-    )
-      .then((response) => response.json())
-      .then(async (data) => (data?.access_token ? data.access_token : null));
-  }
+    if (code) {
+      const authResponse = await fetch(
+        "https://github.com/login/oauth/access_token?" +
+          new URLSearchParams({
+            client_id: process.env.GH_CLIENT_ID as string,
+            client_secret: process.env.GH_CLIENT_SECRET as string,
+            code,
+          }).toString(),
+        {
+          method: "POST",
+          headers: { Accept: "application/json" },
+        },
+      );
 
-  if (token) {
-    var user = await getGithubProfile(token);
+      const authData = await authResponse.json();
+      token = authData?.access_token || null;
+
+      if (!token) {
+        return NextResponse.json(
+          { error: "invalid_or_expired_code", details: authData?.error || "missing_access_token" },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (!token) {
+      return NextResponse.json({ error: "missing_code_or_token" }, { status: 400 });
+    }
+
+    const user = await getGithubProfile(token);
 
     if (user) {
       const donation = {
@@ -55,14 +70,18 @@ export async function GET(req: NextRequest) {
       if (process.env.SMTP) await sendEmail(donation);
     }
 
-    cookies().set("access_token", token);
-    cookies().set("app_version", process.env.APP_VERSION || "unknown");
+    const cookieStore = await cookies();
+    cookieStore.set("access_token", token);
+    cookieStore.set("app_version", process.env.APP_VERSION || "unknown");
 
     return NextResponse.redirect(process.env.NEXTAUTH_URL as string);
+  } catch {
+    return NextResponse.json({ error: "github_callback_failed" }, { status: 500 });
   }
 }
 
 async function setUserDB(data: GitHubToken) {
+  const client = getClient();
   await client.connect();
   const collection = client.db("GitTokenDonation").collection("tokens");
   return collection
@@ -71,33 +90,48 @@ async function setUserDB(data: GitHubToken) {
 }
 
 async function sendEmail(user: GitHubToken) {
-  let nodemailer = require("nodemailer");
   const emailDestino = process.env.ADMIN_EMAIL_SECRET + "";
   try {
-    const transporter = nodemailer.createTransport({
-      port: process.env.SMTP_PORT,
+    const client = new SMTPClient({
       host: process.env.SMTP_HOST,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-      secure: process.env.SMTP_AUTH,
+      port: Number(process.env.SMTP_PORT || 1025),
+      ssl: process.env.SMTP_AUTH === "true",
+      user: process.env.SMTP_USER || undefined,
+      password: process.env.SMTP_PASSWORD || undefined,
     });
-    await transporter.sendMail({
-      from: `Git Token Donation <${process.env.SMTP_USER}>`,
-      to: [emailDestino],
-      subject: `[${process.env.NODE_ENV || "development"}] Novo Token doado`,
-      html:
-        "<div><h1>Novo token recebido de: " +
-        user.user.id +
-        "-" +
-        user.user.name +
-        "!</h1><br /><code>" +
-        user.access_token +
-        "</code></div>",
+
+    await new Promise<void>((resolve, reject) => {
+      client.send(
+        {
+          from: `Git Token Donation <${process.env.SMTP_USER || "no-reply@gittrends.local"}>`,
+          to: [emailDestino],
+          subject: `[${process.env.NODE_ENV || "development"}] Novo Token doado`,
+          attachment: [
+            {
+              data:
+                "<div><h1>Novo token recebido de: " +
+                user.user.id +
+                "-" +
+                user.user.name +
+                "!</h1><br /><code>" +
+                user.access_token +
+                "</code></div>",
+              alternative: true,
+            },
+          ],
+        },
+        (err) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        },
+      );
     });
+
     return;
-  } catch (error) {
+  } catch {
     return;
   }
 }

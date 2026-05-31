@@ -1,11 +1,14 @@
 import { MongoClient } from "mongodb";
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-const client = new MongoClient(process.env.DB_URL + "");
+function getClient() {
+  return new MongoClient(process.env.DB_URL || "mongodb://localhost:27017");
+}
 
 export const revalidate = 0;
 
 export async function GET() {
+  const client = getClient();
   try {
     await client.connect();
     const db = client.db("GitTokenDonation");
@@ -15,5 +18,7 @@ export async function GET() {
     return NextResponse.json(tokens, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: error }, { status: 500 });
+  } finally {
+    await client.close();
   }
 }
