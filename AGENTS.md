@@ -5,10 +5,10 @@ Guidance for AI coding agents working in this repository.
 ## Project
 
 Next.js (App Router) app that collects GitHub OAuth access tokens donated by trusted people for research data
-mining. Donors authorize a GitHub OAuth App, the token is validated against the GitHub API and stored in MongoDB,
+mining. Donors authorize a GitHub OAuth App, the token is validated against the GitHub API and stored in SQLite,
 and admins list the tokens behind a credentials login. Treat donated tokens as secrets in every change.
 
-Stack: Next.js 16, React 19, TypeScript, MUI 9 (Emotion), next-auth v4 (credentials + JWT), MongoDB driver,
+Stack: Next.js 16, React 19, TypeScript, MUI 9 (Emotion), next-auth v4 (credentials + JWT), `node:sqlite`,
 emailjs, SWR, Biome.
 
 ## Commands
@@ -22,7 +22,7 @@ Use **Yarn 1** (`yarn.lock`) on **Node 24** (`.nvmrc`). Never use npm/pnpm or co
 | Auto-fix + format       | `yarn format` (`biome check --write .`) |
 | Typecheck               | `yarn typecheck`                        |
 | Production build        | `yarn build`                            |
-| Local MongoDB + Mailpit | `docker compose up -d`                  |
+| Local Mailpit (emails)  | `docker compose up -d`                  |
 
 Before finishing a change, run `yarn lint && yarn typecheck && yarn build` — this mirrors CI
 (`.github/workflows/ci.yml`). Running the app needs `NEXTAUTH_SECRET` (any value works locally).
@@ -49,7 +49,8 @@ lib/                        Shared server/client modules (see below)
 `lib/` is the home for shared code:
 
 - `lib/messages.ts` — all user-facing texts (`NEXT_PUBLIC_*` with defaults), scopes and error-code mapping.
-- `lib/mongo.ts` — cached `MongoClient`; always use `getTokensCollection()`, never `new MongoClient` in routes.
+- `lib/db.ts` — the only module touching the database (Node's built-in `node:sqlite`, file at `DB_PATH`).
+  Routes call its functions (`saveToken`, `listTokens`); never open `DatabaseSync` elsewhere.
 - `lib/cookies.ts` — cookie names and the donation cookie shape.
 - `lib/types.ts` — `GitHubUser`, `GitHubToken`.
 
@@ -75,6 +76,16 @@ lib/                        Shared server/client modules (see below)
 - **Language**: public pages are driven by `NEXT_PUBLIC_*` texts (English defaults); the admin table UI and
   notification emails are in Portuguese (pt-BR). Keep each area consistent.
 
+## Database
+
+- No ORM or query builder: plain SQL with prepared statements and `?` placeholders — never interpolate values.
+- The schema lives in `lib/db.ts` (`CREATE TABLE IF NOT EXISTS … STRICT`). Make schema changes additive and
+  idempotent there, since it runs on every start.
+- Store dates as ISO-8601 text and lists/objects as JSON text; map rows back to `lib/types.ts` shapes.
+- Don't add database dependencies (drivers, knex, ORMs) without discussing it first.
+- SQLite requires a persistent disk and a single app instance; don't introduce changes that assume
+  serverless or horizontal scaling.
+
 ## Security rules (do not regress)
 
 - Donated tokens never reach the donor's browser: no tokens in client-readable cookies, URLs, or logs.
@@ -83,6 +94,8 @@ lib/                        Shared server/client modules (see below)
 - Keep the OAuth `state` check in the callback, and validate tokens with GitHub (`response.ok`) before storing.
 - Escape any user-provided value inserted into HTML (see `escapeHtml` in `app/api/github/route.tsx`).
 - Compare secrets with `timingSafeEqual` (see `auth.ts`).
+- The SQLite file (`DB_PATH`, default `data/tokens.db`) contains every token: keep it gitignored, outside
+  `public/`, and never serve or log it.
 
 ## Dependencies
 

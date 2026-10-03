@@ -2,7 +2,7 @@ import { SMTPClient } from "emailjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { getGithubProfile } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie, OAUTH_STATE_COOKIE } from "@/lib/cookies";
-import { getTokensCollection } from "@/lib/mongo";
+import { saveToken } from "@/lib/db";
 import type { GitHubToken, GitHubUser } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -56,8 +56,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const collection = await getTokensCollection();
-    await collection.updateOne({ _id: donation.user.id }, { $set: donation }, { upsert: true });
+    saveToken(donation);
   } catch {
     return fail("database");
   }

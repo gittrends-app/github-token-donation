@@ -3,7 +3,7 @@
 [![CI](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml/badge.svg)](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml)
 
 A small [Next.js](https://nextjs.org/) app for collecting GitHub OAuth access tokens donated by people who want to support
-research projects that mine GitHub data. Donors authorize a GitHub OAuth App; the resulting token is stored in MongoDB and
+research projects that mine GitHub data. Donors authorize a GitHub OAuth App; the resulting token is stored in SQLite and
 listed in a password-protected admin area.
 
 ## How it works
@@ -18,11 +18,11 @@ Donors can revoke access at any time in their GitHub settings; the home page lin
 
 ## Getting started
 
-Requirements: Node.js 24 (see `.nvmrc`), Yarn 1 and Docker (for local MongoDB and Mailpit).
+Requirements: Node.js 24 (see `.nvmrc`) and Yarn 1. Docker is optional (Mailpit, to see emails locally).
 
 ```bash
 cp .env.example .env.local   # fill in the values
-docker compose up -d         # MongoDB on :27017, Mailpit on :1025 (UI on :8025)
+docker compose up -d         # optional: Mailpit on :1025 (UI on :8025)
 yarn install
 yarn dev
 ```
@@ -34,6 +34,14 @@ Then open <http://localhost:3000>.
 Create an OAuth App at <https://github.com/settings/developers> and set the **Authorization callback URL** to
 `<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Copy its client id and secret to `GH_CLIENT_ID`,
 `GH_CLIENT_SECRET` and `NEXT_PUBLIC_GH_CLIENT_ID`.
+
+### Database
+
+Tokens are stored with Node's built-in [`node:sqlite`](https://nodejs.org/api/sqlite.html) (no extra
+dependency) in the file set by `DB_PATH` (default `data/tokens.db`), created on first use. The app needs a persistent,
+writable disk and a single instance, so it does not fit serverless hosts. The file holds every token in plain text:
+keep it out of the repository and `public/`, restrict its permissions and back it up regularly, e.g.
+`sqlite3 data/tokens.db ".backup backup.db"`.
 
 ### Environment variables
 
