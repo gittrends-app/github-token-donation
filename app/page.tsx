@@ -36,14 +36,8 @@ export default async function HomePage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const [{ error }, cookieStore, { t }] = await Promise.all([searchParams, cookies(), getI18n()]);
-  // Widened for lookups by arbitrary query/scope strings; the dictionaries still enforce every key
-  const errors: Record<string, string> = t.alerts.errors;
+  // Widened for lookups by arbitrary scope strings; the dictionaries still enforce every key
   const scopeLabels: Record<string, string> = t.scopes;
-  const errorText = error
-    ? Object.hasOwn(errors, error)
-      ? errors[error]
-      : errors.unexpected
-    : undefined;
   const donor = readDonation(cookieStore.get(DONATION_COOKIE)?.value);
   const revokeUrl = ghClientId
     ? `https://github.com/settings/connections/applications/${ghClientId}`
@@ -62,7 +56,7 @@ export default async function HomePage({
       }}
     >
       <Stack spacing={4}>
-        <Alerta t={t.alerts} donor={donor} error={errorText} />
+        <Alerta key={error ?? donor?.login ?? "none"} donor={donor} error={error} />
 
         <Stack spacing={2}>
           <Typography
