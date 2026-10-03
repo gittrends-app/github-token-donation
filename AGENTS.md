@@ -70,7 +70,10 @@ lib/                        Shared server/client modules (see below)
 - **Route files** (`route.ts[x]`) export only HTTP handlers and Next route config (`dynamic`, …). Put
   shared constants and helpers in `lib/`.
 - **Env vars** are for configuration and secrets only, read at runtime via `process.env.X` on the server.
-  Never put user-facing text in env vars, and avoid `NEXT_PUBLIC_*`. Document new variables in `.env.example`.
+  Never put user-facing text in env vars, and avoid `NEXT_PUBLIC_*`. Document new variables in
+  `.env.development` with a working local default. That file is committed: never put real secrets in it
+  (personal values go in the gitignored `.env.local`), and don't define keys there that developers must
+  supply themselves — even an empty value there overrides the same key in `.env`.
 - **Errors in the donation flow** redirect to `/?error=<code>` (`github`, `database`, `state`, …) and are
   mapped to `alerts.errors` in the dictionaries; don't return raw JSON to donors.
 
@@ -124,3 +127,13 @@ lib/                        Shared server/client modules (see below)
   the requested scopes change).
 - Agent skills for this repo live in `.agents/skills/` (e.g. `caveman-commit` for commit messages,
   `frontend-design` for UI work).
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

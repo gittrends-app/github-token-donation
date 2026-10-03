@@ -21,19 +21,25 @@ Donors can revoke access at any time in their GitHub settings; the home page lin
 Requirements: Node.js 24 (see `.nvmrc`) and Yarn 1. Docker is optional (Mailpit, to see emails locally).
 
 ```bash
-cp .env.example .env.local   # fill in the values
-docker compose up -d         # optional: Mailpit on :1025 (UI on :8025)
+docker compose up -d   # optional: Mailpit on :1025 (UI on :8025)
 yarn install
 yarn dev
 ```
 
-Then open <http://localhost:3000>.
+Then open <http://localhost:3000>. No `.env` copy is needed: `next dev` loads the development defaults from
+[`.env.development`](.env.development) (admin login `admin` / `admin`, Mailpit, local SQLite file). Only the GitHub
+OAuth credentials are personal; put them in `.env.local` (gitignored, overrides `.env.development`):
+
+```bash
+GH_CLIENT_ID=...
+GH_CLIENT_SECRET=...
+```
 
 ### GitHub OAuth App
 
 Create an OAuth App at <https://github.com/settings/developers> and set the **Authorization callback URL** to
-`<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Copy its client id and secret to `GH_CLIENT_ID` and
-`GH_CLIENT_SECRET`.
+`<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Put its client id and secret in `GH_CLIENT_ID` and
+`GH_CLIENT_SECRET` (`.env.local` for development).
 
 ### Database
 
@@ -45,8 +51,12 @@ keep it out of the repository and `public/`, restrict its permissions and back i
 
 ### Environment variables
 
-See [`.env.example`](.env.example). All variables are read at runtime on the server, so changing them only needs a
-restart.
+All variables are listed and documented in [`.env.development`](.env.development). They are read at runtime on the
+server, so changing them only needs a restart.
+
+`.env.development` is only loaded by `next dev`. In production (`next build` / `next start`) define every variable in
+the host environment or in `.env.production.local`, with real values: your domain in `NEXTAUTH_URL`, a generated
+`NEXTAUTH_SECRET`, strong admin credentials and your SMTP server.
 
 ### Languages
 
