@@ -18,11 +18,11 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import * as React from "react";
+import Logo from "@/components/Logo";
 import { type Locale, localeLabels, locales } from "@/lib/i18n";
 import { setLocale } from "@/lib/i18n/actions";
 import { useI18n } from "@/lib/i18n/client";
@@ -51,7 +51,7 @@ function Brand() {
         textDecoration: "none",
       }}
     >
-      <Image src="/images/logo-white.png" alt="" width={72} height={72} priority />
+      <Logo size={72} />
       <Typography variant="h6" component="span" sx={{ fontWeight: 700, textAlign: "center" }}>
         {t.app.name}
       </Typography>
@@ -214,7 +214,7 @@ export default function SideDrawer() {
           >
             <MenuIcon />
           </IconButton>
-          <Image src="/images/logo-white.png" alt="" width={32} height={32} />
+          <Logo size={32} />
           <Typography variant="subtitle1" component="span" sx={{ ml: 1.5, fontWeight: 700 }}>
             {t.app.name}
           </Typography>

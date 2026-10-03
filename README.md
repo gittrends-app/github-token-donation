@@ -1,3 +1,5 @@
+<p align="center"><img src="app/icon.svg" alt="" width="96" height="96"></p>
+
 # Git Token Donation
 
 [![CI](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml/badge.svg)](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml)
