@@ -18,13 +18,13 @@ import Alerta from "@/components/Alerta";
 import { ghClientId, ghScopes } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie } from "@/lib/cookies";
 import { getI18n } from "@/lib/i18n/server";
+import { isDonationOutcome } from "@/lib/types";
 
 function readDonation(value: string | undefined): DonationCookie | undefined {
   if (!value) return undefined;
   try {
     const donation = JSON.parse(value) as DonationCookie;
-    // A new app version may request different scopes, so previous donors can donate again
-    return donation.version === process.env.APP_VERSION ? donation : undefined;
+    return typeof donation?.login === "string" ? donation : undefined;
   } catch {
     return undefined;
   }
@@ -33,9 +33,13 @@ function readDonation(value: string | undefined): DonationCookie | undefined {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; donation?: string }>;
 }) {
-  const [{ error }, cookieStore, { t }] = await Promise.all([searchParams, cookies(), getI18n()]);
+  const [{ error, donation }, cookieStore, { t }] = await Promise.all([
+    searchParams,
+    cookies(),
+    getI18n(),
+  ]);
   // Widened for lookups by arbitrary scope strings; the dictionaries still enforce every key
   const scopeLabels: Record<string, string> = t.scopes;
   const donor = readDonation(cookieStore.get(DONATION_COOKIE)?.value);
@@ -56,7 +60,12 @@ export default async function HomePage({
       }}
     >
       <Stack spacing={4}>
-        <Alerta key={error ?? donor?.login ?? "none"} donor={donor} error={error} />
+        <Alerta
+          key={error ?? donation ?? "none"}
+          donor={donor}
+          error={error}
+          outcome={isDonationOutcome(donation) ? donation : undefined}
+        />
 
         <Stack spacing={2}>
           <Typography
@@ -74,18 +83,23 @@ export default async function HomePage({
           </Typography>
         </Stack>
 
-        <Box>
+        {/* Donors can always donate again: the new token replaces the stored one */}
+        <Stack spacing={1.5} sx={{ alignItems: "flex-start" }}>
           <Button
             variant="contained"
             size="large"
             href="/api/github/authorize"
-            disabled={Boolean(donor)}
             startIcon={<GitHubIcon />}
             sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
           >
-            {t.home.donate}
+            {donor ? t.home.update : t.home.donate}
           </Button>
-        </Box>
+          {donor && (
+            <Typography variant="body2" color="text.secondary">
+              {t.home.updateHint(donor.login)}
+            </Typography>
+          )}
+        </Stack>
 
         <Card>
           <CardContent>

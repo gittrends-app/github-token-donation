@@ -4,7 +4,7 @@ import { getGithubProfile } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie, OAUTH_STATE_COOKIE } from "@/lib/cookies";
 import { saveToken } from "@/lib/db";
 import { getDictionary, isLocale } from "@/lib/i18n";
-import type { GitHubToken, GitHubUser } from "@/lib/types";
+import type { DonationOutcome, GitHubToken, GitHubUser } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   const home = new URL("/", process.env.NEXTAUTH_URL || req.nextUrl.origin);
@@ -56,14 +56,16 @@ export async function GET(req: NextRequest) {
     return fail("github");
   }
 
+  let outcome: DonationOutcome;
   try {
-    saveToken(donation);
+    outcome = saveToken(donation);
   } catch {
     return fail("database");
   }
 
-  if (process.env.SMTP === "true") await sendEmail(donation);
+  if (process.env.SMTP === "true") await sendEmail(donation, outcome);
 
+  home.searchParams.set("donation", outcome);
   const response = NextResponse.redirect(home);
   response.cookies.delete({ name: OAUTH_STATE_COOKIE, path: "/api/github" });
   response.cookies.delete("access_token"); // legacy cookie that exposed the token to the browser
@@ -72,7 +74,6 @@ export async function GET(req: NextRequest) {
     JSON.stringify({
       login: donation.user.login,
       name: donation.user.name,
-      version: process.env.APP_VERSION,
     } satisfies DonationCookie),
     {
       httpOnly: true,
@@ -96,7 +97,7 @@ function escapeHtml(value: unknown) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => HTML_ENTITIES[char] ?? char);
 }
 
-async function sendEmail(donation: GitHubToken) {
+async function sendEmail(donation: GitHubToken, outcome: DonationOutcome) {
   try {
     const client = new SMTPClient({
       host: process.env.SMTP_HOST,
@@ -115,7 +116,7 @@ async function sendEmail(donation: GitHubToken) {
     await client.sendAsync({
       from: `GitHub Token Donation <${process.env.SMTP_USER || "no-reply@gittrends.local"}>`,
       to: [`${process.env.ADMIN_EMAIL_SECRET}`],
-      subject: `[${process.env.NODE_ENV || "development"}] ${t.subject(user.login)}`,
+      subject: `[${process.env.NODE_ENV || "development"}] ${outcome === "updated" ? t.subjectUpdated(user.login) : t.subject(user.login)}`,
       text: `${t.heading(String(user.id), user.login, user.name ?? "")}\n${t.scopes}: ${scopes}`,
       attachment: [
         {

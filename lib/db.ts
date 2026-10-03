@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { GitHubToken, GitHubUser } from "@/lib/types";
+import type { DonationOutcome, GitHubToken, GitHubUser } from "@/lib/types";
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS tokens (
@@ -43,10 +43,14 @@ function getDb(): DatabaseSync {
   return globalForDb.db;
 }
 
-export function saveToken(token: GitHubToken) {
-  getDb()
-    .prepare(
-      `INSERT INTO tokens (user_id, login, name, access_token, scopes, profile, donated_at)
+// Upserts by GitHub user id: donating again replaces the stored token (e.g. with new scopes)
+export function saveToken(token: GitHubToken): DonationOutcome {
+  const db = getDb();
+  const existed =
+    db.prepare("SELECT 1 FROM tokens WHERE user_id = ?").get(token.user.id) !== undefined;
+
+  db.prepare(
+    `INSERT INTO tokens (user_id, login, name, access_token, scopes, profile, donated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (user_id) DO UPDATE SET
          login = excluded.login,
@@ -55,16 +59,17 @@ export function saveToken(token: GitHubToken) {
          scopes = excluded.scopes,
          profile = excluded.profile,
          donated_at = excluded.donated_at`,
-    )
-    .run(
-      token.user.id,
-      token.user.login,
-      token.user.name ?? null,
-      token.access_token,
-      JSON.stringify(token.scopes ?? []),
-      JSON.stringify(token.user),
-      token.donated_at.toISOString(),
-    );
+  ).run(
+    token.user.id,
+    token.user.login,
+    token.user.name ?? null,
+    token.access_token,
+    JSON.stringify(token.scopes ?? []),
+    JSON.stringify(token.user),
+    token.donated_at.toISOString(),
+  );
+
+  return existed ? "updated" : "created";
 }
 
 export function listTokens(): GitHubToken[] {

@@ -16,7 +16,9 @@ listed in a password-protected admin area.
    (also recording the granted scopes), stores it and optionally emails the admins.
 3. Admins sign in at `/login` and manage tokens at `/admin` (search, copy one or all tokens).
 
-Donors can revoke access at any time in their GitHub settings; the home page links there directly.
+Donors can revoke access at any time in their GitHub settings; the home page links there directly. Donors who already
+donated see an **Update donation** button: donating again replaces their stored token (useful to renew it or to grant
+updated scopes) and the admins get an "updated" notification.
 
 ## Getting started
 
@@ -80,7 +82,7 @@ typecheck fails otherwise). Admin notification emails use `ADMIN_LOCALE` (defaul
 | `yarn np`        | Bump the version, tag and release  |
 
 Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) (enforced by commitlint via Husky and
-in CI). Bumping the version makes previous donors able to donate again (useful when the requested scopes change).
+in CI).
 
 ## Continuous integration
 

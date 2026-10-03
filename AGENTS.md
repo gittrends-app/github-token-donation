@@ -103,7 +103,7 @@ lib/                        Shared server/client modules (see below)
 ## Security rules (do not regress)
 
 - Donated tokens never reach the donor's browser: no tokens in client-readable cookies, URLs, or logs.
-  The only cookie set after donating is the `httpOnly` donation cookie (login/name/version).
+  The only cookie set after donating is the `httpOnly` donation cookie (login/name).
 - Every admin API must check `getServerSession(authOptions)` itself, in addition to `proxy.ts`.
 - Keep the OAuth `state` check in the callback, and validate tokens with GitHub (`response.ok`) before storing.
 - Escape any user-provided value inserted into HTML (see `escapeHtml` in `app/api/github/route.tsx`).
@@ -123,8 +123,9 @@ lib/                        Shared server/client modules (see below)
 - Conventional Commits, enforced by commitlint (Husky `commit-msg` hook and the PR workflow). Lowercase type;
   the history writes descriptions in Portuguese, e.g. `fix: corrige nome do parametro (scopes -> scope)`.
 - Releases use `yarn np` (bumps `package.json`, creates the `vX.Y.Z` commit and tag; nothing is published).
-- The app version is embedded as `APP_VERSION`; bumping it lets previous donors donate again (useful when
-  the requested scopes change).
+- The app version is embedded as `APP_VERSION` (shown in the sidebar footer).
+- Donating again is always allowed: `saveToken` upserts by GitHub user id and returns `created`/`updated`,
+  which the callback passes to the home page as `?donation=` (toast) and to the admin email subject.
 - Agent skills for this repo live in `.agents/skills/` (e.g. `caveman-commit` for commit messages,
   `frontend-design` for UI work).
 

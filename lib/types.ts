@@ -6,6 +6,13 @@ export interface GitHubUser {
   email: string | null;
 }
 
+// Result of storing a donation: a first donation or a refresh of an existing one
+export type DonationOutcome = "created" | "updated";
+
+export function isDonationOutcome(value: unknown): value is DonationOutcome {
+  return value === "created" || value === "updated";
+}
+
 export interface GitHubToken {
   user: GitHubUser;
   access_token: string;

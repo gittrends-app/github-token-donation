@@ -14,6 +14,9 @@ export const en = {
   home: {
     title: "Donate a GitHub access token",
     donate: "Donate with GitHub",
+    update: "Update donation",
+    updateHint: (login: string) =>
+      `You already donated as @${login}. Donate again to refresh your token or grant updated permissions.`,
     accessTitle: "What we will be able to access",
     revokeNote:
       "Tokens are only used for research data collection and are never shared. You can revoke access at any time in your",
@@ -28,8 +31,9 @@ export const en = {
     "user:email": "Read your email addresses",
   },
   alerts: {
-    thanksTitle: (name: string) => `Thank you, ${name}!`,
+    thanksTitle: (name?: string) => (name ? `Thank you, ${name}!` : "Thank you!"),
     thanksMessage: "You have successfully donated a token.",
+    updatedMessage: "Your donation was updated with a new token.",
     errorTitle: "Error",
     errors: {
       github: "Error trying to reach GitHub. Please try again.",
@@ -66,6 +70,7 @@ export const en = {
   },
   email: {
     subject: (login: string) => `New token donated by ${login}`,
+    subjectUpdated: (login: string) => `Token donation updated by ${login}`,
     heading: (id: string, login: string, name: string) =>
       `New token received from: ${id} - ${login} (${name})`,
     scopes: "Scopes",

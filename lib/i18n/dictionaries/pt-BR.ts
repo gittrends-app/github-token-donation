@@ -16,6 +16,9 @@ export const ptBR: Dictionary = {
   home: {
     title: "Doe um token de acesso do GitHub",
     donate: "Doar com o GitHub",
+    update: "Atualizar doação",
+    updateHint: (login) =>
+      `Você já doou como @${login}. Doe novamente para renovar seu token ou conceder permissões atualizadas.`,
     accessTitle: "O que poderemos acessar",
     revokeNote:
       "Os tokens são usados apenas para coleta de dados de pesquisa e nunca são compartilhados. Você pode revogar o acesso a qualquer momento nas suas",
@@ -30,8 +33,9 @@ export const ptBR: Dictionary = {
     "user:email": "Ler seus endereços de e-mail",
   },
   alerts: {
-    thanksTitle: (name) => `Obrigado, ${name}!`,
+    thanksTitle: (name) => (name ? `Obrigado, ${name}!` : "Obrigado!"),
     thanksMessage: "Seu token foi doado com sucesso.",
+    updatedMessage: "Sua doação foi atualizada com um novo token.",
     errorTitle: "Erro",
     errors: {
       github: "Erro ao acessar o GitHub. Tente novamente.",
@@ -68,6 +72,7 @@ export const ptBR: Dictionary = {
   },
   email: {
     subject: (login) => `Novo token doado por ${login}`,
+    subjectUpdated: (login) => `Doação de token atualizada por ${login}`,
     heading: (id, login, name) => `Novo token recebido de: ${id} - ${login} (${name})`,
     scopes: "Escopos",
   },

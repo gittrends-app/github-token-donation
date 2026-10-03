@@ -7,16 +7,26 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import type { DonationCookie } from "@/lib/cookies";
 import { useI18n } from "@/lib/i18n/client";
+import type { DonationOutcome } from "@/lib/types";
 
-// Floating status shown after the OAuth round trip: a thank-you while the donation cookie is valid
-// (auto-hides), or the callback's `?error=<code>` (stays until closed, then leaves the URL clean)
-export default function Alerta({ donor, error }: { donor?: DonationCookie; error?: string }) {
+// Floating status shown right after the OAuth round trip, driven by the callback's query string:
+// `?donation=created|updated` (auto-hides) or `?error=<code>` (stays until closed). Closing it
+// leaves the URL clean, so a reload or a later visit doesn't show it again.
+export default function Alerta({
+  donor,
+  error,
+  outcome,
+}: {
+  donor?: DonationCookie;
+  error?: string;
+  outcome?: DonationOutcome;
+}) {
   const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = React.useState(Boolean(error || donor));
+  const [open, setOpen] = React.useState(Boolean(error || outcome));
 
-  if (!error && !donor) return null;
+  if (!error && !outcome) return null;
 
   // Widened for lookups by an arbitrary query string; the dictionaries still enforce every key
   const errors: Record<string, string> = t.alerts.errors;
@@ -25,7 +35,7 @@ export default function Alerta({ donor, error }: { donor?: DonationCookie; error
   const handleClose = (_event?: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
     if (reason === "clickaway") return;
     setOpen(false);
-    if (error) router.replace(pathname, { scroll: false });
+    router.replace(pathname, { scroll: false });
   };
 
   return (
@@ -53,8 +63,8 @@ export default function Alerta({ donor, error }: { donor?: DonationCookie; error
           onClose={handleClose}
           sx={{ width: "100%", maxWidth: 480 }}
         >
-          <AlertTitle>{t.alerts.thanksTitle(donor?.name || donor?.login || "")}</AlertTitle>
-          {t.alerts.thanksMessage}
+          <AlertTitle>{t.alerts.thanksTitle(donor?.name || donor?.login)}</AlertTitle>
+          {outcome === "updated" ? t.alerts.updatedMessage : t.alerts.thanksMessage}
         </Alert>
       )}
     </Snackbar>
