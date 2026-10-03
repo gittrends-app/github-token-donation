@@ -1,8 +1,6 @@
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
-import GitHubIcon from "@mui/icons-material/GitHub";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Link from "@mui/material/Link";
@@ -15,6 +13,7 @@ import Typography from "@mui/material/Typography";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Alerta from "@/components/Alerta";
+import DonateButton from "@/components/DonateButton";
 import { ghClientId, ghScopes } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie } from "@/lib/cookies";
 import { getI18n } from "@/lib/i18n/server";
@@ -85,15 +84,7 @@ export default async function HomePage({
 
         {/* Donors can always donate again: the new token replaces the stored one */}
         <Stack spacing={1.5} sx={{ alignItems: "flex-start" }}>
-          <Button
-            variant="contained"
-            size="large"
-            href="/api/github/authorize"
-            startIcon={<GitHubIcon />}
-            sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
-          >
-            {donor ? t.home.update : t.home.donate}
-          </Button>
+          <DonateButton isDonor={Boolean(donor)} />
           {donor && (
             <Typography variant="body2" color="text.secondary">
               {t.home.updateHint(donor.login)}

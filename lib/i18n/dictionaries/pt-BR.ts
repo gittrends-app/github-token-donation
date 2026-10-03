@@ -17,6 +17,7 @@ export const ptBR: Dictionary = {
     title: "Doe um token de acesso do GitHub",
     donate: "Doar com o GitHub",
     update: "Atualizar doação",
+    redirecting: "Redirecionando para o GitHub…",
     updateHint: (login) =>
       `Você já doou como @${login}. Doe novamente para renovar seu token ou conceder permissões atualizadas.`,
     accessTitle: "O que poderemos acessar",

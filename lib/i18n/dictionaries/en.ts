@@ -15,6 +15,7 @@ export const en = {
     title: "Donate a GitHub access token",
     donate: "Donate with GitHub",
     update: "Update donation",
+    redirecting: "Redirecting to GitHub…",
     updateHint: (login: string) =>
       `You already donated as @${login}. Donate again to refresh your token or grant updated permissions.`,
     accessTitle: "What we will be able to access",
