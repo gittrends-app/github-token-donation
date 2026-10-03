@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Git Token Donation
 
-## Getting Started
+[![CI](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml/badge.svg)](https://github.com/gittrends-app/github-token-donation/actions/workflows/ci.yml)
 
-First, run the development server:
+A small [Next.js](https://nextjs.org/) app for collecting GitHub OAuth access tokens donated by people who want to support
+research projects that mine GitHub data. Donors authorize a GitHub OAuth App; the resulting token is stored in MongoDB and
+listed in a password-protected admin area.
+
+## How it works
+
+1. The donor clicks **Donate** and is sent to `/api/github/authorize`, which redirects to GitHub with the scopes from
+   `NEXT_PUBLIC_GH_SCOPES` and a random `state` (CSRF protection).
+2. GitHub redirects back to `/api/github`, which exchanges the code for a token, validates it against the GitHub API
+   (also recording the granted scopes), stores it and optionally emails the admins.
+3. Admins sign in at `/login` and manage tokens at `/admin` (search, copy one or all tokens).
+
+Donors can revoke access at any time in their GitHub settings; the home page links there directly.
+
+## Getting started
+
+Requirements: Node.js 24 (see `.nvmrc`), Yarn 1 and Docker (for local MongoDB and Mailpit).
 
 ```bash
-npm run dev
-# or
+cp .env.example .env.local   # fill in the values
+docker compose up -d         # MongoDB on :27017, Mailpit on :1025 (UI on :8025)
+yarn install
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### GitHub OAuth App
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+Create an OAuth App at <https://github.com/settings/developers> and set the **Authorization callback URL** to
+`<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Copy its client id and secret to `GH_CLIENT_ID`,
+`GH_CLIENT_SECRET` and `NEXT_PUBLIC_GH_CLIENT_ID`.
 
-## Learn More
+### Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+See [`.env.example`](.env.example). Every `NEXT_PUBLIC_*` text is optional and falls back to the defaults in
+[`lib/messages.ts`](lib/messages.ts). They are inlined at build time, so rebuild after changing them.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+| Command          | Description                        |
+| ---------------- | ---------------------------------- |
+| `yarn dev`       | Start the development server       |
+| `yarn build`     | Production build                   |
+| `yarn start`     | Serve the production build         |
+| `yarn lint`      | Lint and format check with Biome   |
+| `yarn typecheck` | Generate route types and run `tsc` |
+| `yarn format`    | Apply Biome formatting and fixes   |
+| `yarn np`        | Bump the version, tag and release  |
 
-## Deploy on Vercel
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) (enforced by commitlint via Husky and
+in CI). Bumping the version makes previous donors able to donate again (useful when the requested scopes change).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Continuous integration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- **CI** (`.github/workflows/ci.yml`): Biome lint/format, typecheck and build on every push and pull request.
+- **Commitlint** (`.github/workflows/commitlint.yml`): validates the commit messages of pull requests.
+- **Dependabot** (`.github/dependabot.yml`): weekly, grouped updates for npm packages and GitHub Actions.
+
+## License
+
+[MIT](LICENSE)

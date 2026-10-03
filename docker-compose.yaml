@@ -1,8 +1,7 @@
-version: "3"
-
 services:
   mongo:
-    image: mongo:latest
+    # mongo:8 refuses to start on Linux kernels >= 6.19 (SERVER-121912)
+    image: mongo:7
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_USER?Variable not set}

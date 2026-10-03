@@ -1,5 +1,13 @@
-import { AuthOptions } from "next-auth";
+import { timingSafeEqual } from "node:crypto";
+import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+
+function safeEqual(value: string | undefined, expected: string | undefined) {
+  if (!value || !expected) return false;
+  const a = Buffer.from(value);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -11,8 +19,8 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (
-          credentials?.user == process.env.ADMIN_LOGIN_SECRET &&
-          credentials?.password == process.env.ADMIN_PASSWORD_SECRET
+          safeEqual(credentials?.user, process.env.ADMIN_LOGIN_SECRET) &&
+          safeEqual(credentials?.password, process.env.ADMIN_PASSWORD_SECRET)
         ) {
           return {
             id: process.env.ADMIN_LOGIN_SECRET as string,
@@ -24,5 +32,6 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
+  pages: { signIn: "/login" },
 };

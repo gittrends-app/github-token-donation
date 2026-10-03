@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      mui-emotion:
+        patterns: ["@mui/*", "@emotion/*"]
+      next-react:
+        patterns: ["next", "react", "react-dom", "@types/react", "@types/react-dom"]
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Keep types aligned with the Node.js major in .nvmrc
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+      # TypeScript 7 has no JS API yet, which Next.js needs for build-time type checking
+      - dependency-name: typescript
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      # next-auth v5 is still in beta
+      - dependency-name: next-auth
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

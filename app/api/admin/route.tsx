@@ -1,24 +1,20 @@
-import { MongoClient } from "mongodb";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
+import { getTokensCollection } from "@/lib/mongo";
 
-function getClient() {
-  return new MongoClient(process.env.DB_URL || "mongodb://localhost:27017");
-}
-
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const client = getClient();
-  try {
-    await client.connect();
-    const db = client.db("GitTokenDonation");
-    const collection = db.collection("tokens");
+  // The proxy already guards this route; double-check here so it never leaks tokens on misconfiguration
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-    var tokens = await collection.find({}).toArray();
+  try {
+    const collection = await getTokensCollection();
+    const tokens = await collection.find({}).sort({ donated_at: -1 }).toArray();
     return NextResponse.json(tokens, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: error }, { status: 500 });
-  } finally {
-    await client.close();
+  } catch {
+    return NextResponse.json({ error: "database_unavailable" }, { status: 500 });
   }
 }

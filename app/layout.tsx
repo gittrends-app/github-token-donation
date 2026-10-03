@@ -1,45 +1,50 @@
-import * as React from "react";
 import Box from "@mui/material/Box";
-import ThemeRegistry from "@/components/ThemeRegistry/ThemeRegistry";
-import SideDrawer from "@/components/SideDrawer";
+import type { Metadata, Viewport } from "next";
 import { getServerSession } from "next-auth";
+import type * as React from "react";
 import { authOptions } from "@/auth";
+import SideDrawer from "@/components/SideDrawer";
+import ThemeRegistry from "@/components/ThemeRegistry/ThemeRegistry";
 import SessionProvider from "@/context/ClientProvider";
-import { CookiesProvider } from "next-client-cookies/server";
+import { messages } from "@/lib/messages";
 
 import "./globals.css";
 
-export const metadata = {
-  title: "Git Token Donation",
+export const metadata: Metadata = {
+  title: { default: messages.name, template: `%s · ${messages.name}` },
+  description: messages.message,
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#2f7d7c" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1716" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body>
         <ThemeRegistry>
-          <CookiesProvider>
-            <SessionProvider session={session}>
+          <SessionProvider session={session}>
+            <Box sx={{ display: { md: "flex" }, minHeight: "100dvh" }}>
               <SideDrawer />
               <Box
                 component="main"
                 sx={{
-                  bgcolor: "background.default",
-                  ml: { xs: 0, md: "240px" },
-                  width: { xs: "100%", md: "calc(100% - 240px)" },
-                  paddingTop: "25px",
-                  paddingX: { xs: "1%", md: "5%", lg: "10%" },
-                  margin: "auto",
-                  overflow: "hidden",
-                  height: "100%",
+                  flexGrow: 1,
+                  minWidth: 0,
+                  px: { xs: 2, sm: 4, lg: 8 },
+                  py: { xs: 3, md: 6 },
                 }}
               >
                 {children}
               </Box>
-            </SessionProvider>
-          </CookiesProvider>
+            </Box>
+          </SessionProvider>
         </ThemeRegistry>
       </body>
     </html>

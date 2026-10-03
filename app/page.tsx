@@ -1,94 +1,136 @@
-"use client";
-
-import * as React from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import Alerta from "@/components/Alerta";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Link from "@mui/material/Link";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { cookies } from "next/headers";
 import Image from "next/image";
-import { useCookies } from "next-client-cookies";
-import { Button } from "@mui/material";
+import Alerta from "@/components/Alerta";
+import { DONATION_COOKIE, type DonationCookie } from "@/lib/cookies";
+import { describeScope, errorMessage, ghClientId, ghScopes, messages } from "@/lib/messages";
 
-export default function HomePage() {
-  const cookie = useCookies();
+function readDonation(value: string | undefined): DonationCookie | undefined {
+  if (!value) return undefined;
+  try {
+    const donation = JSON.parse(value) as DonationCookie;
+    // A new app version may request different scopes, so previous donors can donate again
+    return donation.version === process.env.APP_VERSION ? donation : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
-  React.useEffect(() => {
-    if (cookie.get("app_version") !== process.env.APP_VERSION) cookie.remove("access_token");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const [{ error }, cookieStore] = await Promise.all([searchParams, cookies()]);
+  const donor = readDonation(cookieStore.get(DONATION_COOKIE)?.value);
+  const revokeUrl = ghClientId
+    ? `https://github.com/settings/connections/applications/${ghClientId}`
+    : "https://github.com/settings/applications";
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+        maxWidth: 1100,
+        mx: "auto",
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", md: "1.2fr 0.8fr" },
+        alignItems: "center",
+        gap: { xs: 4, md: 6 },
+        minHeight: { md: "calc(100dvh - 96px)" },
       }}
     >
-      <Alerta sx={{ margin: "auto", maxWidth: "350px" }} />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-          flexGrow: 1,
-        }}
-      >
-        <Typography variant="h3" color="primary" sx={{ fontWeight: "bold" }}>
-          {process.env.NEXT_PUBLIC_TITLE}
-        </Typography>
-        <br />
-        <br />
-        <Typography variant="h5">
-          {process.env.NEXT_PUBLIC_MESSAGE}
-        </Typography>
-      </Box>
-      <br />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column-reverse",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-          float: "center",
-        }}
-      >
-        <Button
-          variant="contained"
-          size="large"
-          color="primary"
-          sx={{ color: "white", fontWeight: "bold", fontSize: "1.25rem" }}
-          disabled={cookie.get("access_token") ? true : false}
-          onClick={() => {
-            if (!cookie.get("access_token")) {
-              window.location.assign(
-                "https://github.com/login/oauth/authorize?" +
-                  new URLSearchParams({
-                    client_id: process.env.NEXT_PUBLIC_GH_CLIENT_ID as string,
-                    scope: process.env.NEXT_PUBLIC_GH_SCOPES || "public_repo,read:user",
-                  }).toString(),
-              );
-            }
-          }}
-        >
-          <GitHubIcon style={{ marginRight: 5 }} />
-          {process.env.NEXT_PUBLIC_DONATE_BUTTON}
-        </Button>
-      </Box>
+      <Stack spacing={4}>
+        <Alerta donor={donor} error={errorMessage(error)} />
+
+        <Stack spacing={2}>
+          <Typography
+            variant="overline"
+            color="primary"
+            sx={{ fontWeight: 700, letterSpacing: 1.5 }}
+          >
+            {messages.name}
+          </Typography>
+          <Typography variant="h3" component="h1" sx={{ fontSize: { xs: "2rem", md: "3rem" } }}>
+            {messages.title}
+          </Typography>
+          <Typography variant="h6" component="p" color="text.secondary" sx={{ fontWeight: 400 }}>
+            {messages.message}
+          </Typography>
+        </Stack>
+
+        <Box>
+          <Button
+            variant="contained"
+            size="large"
+            href="/api/github/authorize"
+            disabled={Boolean(donor)}
+            startIcon={<GitHubIcon />}
+            sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
+          >
+            {messages.donateButton}
+          </Button>
+        </Box>
+
+        <Card>
+          <CardContent>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
+              <LockOutlinedIcon color="primary" fontSize="small" />
+              <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+                What we will be able to access
+              </Typography>
+            </Stack>
+            <List dense disablePadding>
+              {ghScopes.map((scope) => (
+                <ListItem key={scope} disableGutters>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <CheckCircleOutlineIcon color="success" fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary={describeScope(scope)} secondary={<code>{scope}</code>} />
+                </ListItem>
+              ))}
+            </List>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Tokens are only used for research data collection and are never shared. You can revoke
+              access at any time in your{" "}
+              <Link href={revokeUrl} target="_blank" rel="noopener noreferrer">
+                GitHub settings
+              </Link>
+              .
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
 
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "end",
-          alignItems: "end",
-          flexGrow: 1,
+          justifyContent: "center",
+          order: { xs: -1, md: 0 },
         }}
       >
-        <Image src="/images/ghpet.png" alt="Logo" width={240} height={240}></Image>
+        <Box sx={{ width: { xs: 160, sm: 220, md: "100%" }, maxWidth: 380 }}>
+          <Image
+            src="/images/ghpet.png"
+            alt="Scientist Octocat"
+            width={612}
+            height={684}
+            priority
+            style={{ width: "100%", height: "auto" }}
+          />
+        </Box>
       </Box>
     </Box>
   );
