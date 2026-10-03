@@ -2,7 +2,7 @@ import type { Dictionary } from "./en";
 
 export const ptBR: Dictionary = {
   app: {
-    name: "Git Token Donation",
+    name: "GitHub Token Donation",
     description:
       "Fazemos milhares de requisições à API do GitHub para manter nossos conjuntos de dados de pesquisa atualizados. Cada token doado nos ajuda a coletar dados mais rápido.",
   },

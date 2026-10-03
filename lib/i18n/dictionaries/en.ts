@@ -1,6 +1,6 @@
 export const en = {
   app: {
-    name: "Git Token Donation",
+    name: "GitHub Token Donation",
     description:
       "We make thousands of GitHub API requests to keep our research datasets up to date. Every donated token helps us collect data faster.",
   },

@@ -113,7 +113,7 @@ async function sendEmail(donation: GitHubToken) {
     const scopes = (donation.scopes || []).join(", ") || "-";
 
     await client.sendAsync({
-      from: `Git Token Donation <${process.env.SMTP_USER || "no-reply@gittrends.local"}>`,
+      from: `GitHub Token Donation <${process.env.SMTP_USER || "no-reply@gittrends.local"}>`,
       to: [`${process.env.ADMIN_EMAIL_SECRET}`],
       subject: `[${process.env.NODE_ENV || "development"}] ${t.subject(user.login)}`,
       text: `${t.heading(String(user.id), user.login, user.name ?? "")}\n${t.scopes}: ${scopes}`,
