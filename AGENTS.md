@@ -48,7 +48,8 @@ lib/                        Shared server/client modules (see below)
 
 `lib/` is the home for shared code:
 
-- `lib/messages.ts` — all user-facing texts (`NEXT_PUBLIC_*` with defaults), scopes and error-code mapping.
+- `lib/i18n/` — internationalization (en, pt-BR): `config.ts` (locales, detection), `dictionaries/` (all
+  user-facing texts), `server.ts` (`getI18n()`), `client.tsx` (`useI18n()`), `actions.ts` (`setLocale`).
 - `lib/db.ts` — the only module touching the database (Node's built-in `node:sqlite`, file at `DB_PATH`).
   Routes call its functions (`saveToken`, `listTokens`); never open `DatabaseSync` elsewhere.
 - `lib/cookies.ts` — cookie names and the donation cookie shape.
@@ -68,13 +69,23 @@ lib/                        Shared server/client modules (see below)
   next-auth/react). Read cookies and search params on the server (`await cookies()`, `await searchParams`).
 - **Route files** (`route.ts[x]`) export only HTTP handlers and Next route config (`dynamic`, …). Put
   shared constants and helpers in `lib/`.
-- **Env vars**: server secrets via `process.env.X`; client-visible texts must be `NEXT_PUBLIC_*` referenced
-  literally (inlined at build) and go through `lib/messages.ts` with a sensible default. Document new
-  variables in `.env.example`.
+- **Env vars** are for configuration and secrets only, read at runtime via `process.env.X` on the server.
+  Never put user-facing text in env vars, and avoid `NEXT_PUBLIC_*`. Document new variables in `.env.example`.
 - **Errors in the donation flow** redirect to `/?error=<code>` (`github`, `database`, `state`, …) and are
-  mapped to messages in `lib/messages.ts`; don't return raw JSON to donors.
-- **Language**: public pages are driven by `NEXT_PUBLIC_*` texts (English defaults); the admin table UI and
-  notification emails are in Portuguese (pt-BR). Keep each area consistent.
+  mapped to `alerts.errors` in the dictionaries; don't return raw JSON to donors.
+
+## Internationalization
+
+- No hard-coded user-facing strings in components: add the key to `lib/i18n/dictionaries/en.ts` (the
+  reference, which defines the `Dictionary` type) and translate it in `pt-BR.ts` — the typecheck fails if a
+  key is missing. Use functions for interpolation/plurals, e.g. `received: (count: number) => …`.
+- Server components: `const { t, locale } = await getI18n()`. Client components: `const { t, locale } =
+  useI18n()`. Pass the locale (not the dictionary) across the server/client boundary — functions in
+  dictionaries can't be serialized.
+- Format dates/numbers with `Intl.*` using the active `locale`. MUI's built-in texts come from its locale
+  packs, applied in `ThemeRegistry.tsx`.
+- Locale precedence: `locale` cookie (EN/PT switcher) > `Accept-Language` > `en`. URLs are not localized.
+- Admin notification emails use `ADMIN_LOCALE` (default `pt-BR`), not the donor's language.
 
 ## Database
 

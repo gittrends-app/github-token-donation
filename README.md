@@ -9,7 +9,7 @@ listed in a password-protected admin area.
 ## How it works
 
 1. The donor clicks **Donate** and is sent to `/api/github/authorize`, which redirects to GitHub with the scopes from
-   `NEXT_PUBLIC_GH_SCOPES` and a random `state` (CSRF protection).
+   `GH_SCOPES` and a random `state` (CSRF protection).
 2. GitHub redirects back to `/api/github`, which exchanges the code for a token, validates it against the GitHub API
    (also recording the granted scopes), stores it and optionally emails the admins.
 3. Admins sign in at `/login` and manage tokens at `/admin` (search, copy one or all tokens).
@@ -32,8 +32,8 @@ Then open <http://localhost:3000>.
 ### GitHub OAuth App
 
 Create an OAuth App at <https://github.com/settings/developers> and set the **Authorization callback URL** to
-`<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Copy its client id and secret to `GH_CLIENT_ID`,
-`GH_CLIENT_SECRET` and `NEXT_PUBLIC_GH_CLIENT_ID`.
+`<NEXTAUTH_URL>/api/github` (e.g. `http://localhost:3000/api/github`). Copy its client id and secret to `GH_CLIENT_ID` and
+`GH_CLIENT_SECRET`.
 
 ### Database
 
@@ -45,8 +45,15 @@ keep it out of the repository and `public/`, restrict its permissions and back i
 
 ### Environment variables
 
-See [`.env.example`](.env.example). Every `NEXT_PUBLIC_*` text is optional and falls back to the defaults in
-[`lib/messages.ts`](lib/messages.ts). They are inlined at build time, so rebuild after changing them.
+See [`.env.example`](.env.example). All variables are read at runtime on the server, so changing them only needs a
+restart.
+
+### Languages
+
+The UI is available in English and Brazilian Portuguese. The language comes from the `locale` cookie set by the EN/PT
+switcher in the sidebar, falling back to the browser's `Accept-Language` and then English. Texts live in
+[`lib/i18n/dictionaries/`](lib/i18n/dictionaries): `en.ts` is the reference and `pt-BR.ts` must provide every key (the
+typecheck fails otherwise). Admin notification emails use `ADMIN_LOCALE` (default `pt-BR`).
 
 ## Scripts
 

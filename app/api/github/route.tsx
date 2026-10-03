@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getGithubProfile } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie, OAUTH_STATE_COOKIE } from "@/lib/cookies";
 import { saveToken } from "@/lib/db";
+import { getDictionary, isLocale } from "@/lib/i18n";
 import type { GitHubToken, GitHubUser } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -105,17 +106,22 @@ async function sendEmail(donation: GitHubToken) {
       password: process.env.SMTP_PASSWORD || undefined,
     });
 
+    // Emails go to the admins, so they use ADMIN_LOCALE instead of the donor's language
+    const adminLocale = process.env.ADMIN_LOCALE;
+    const t = getDictionary(isLocale(adminLocale) ? adminLocale : "pt-BR").email;
     const { user } = donation;
+    const scopes = (donation.scopes || []).join(", ") || "-";
+
     await client.sendAsync({
       from: `Git Token Donation <${process.env.SMTP_USER || "no-reply@gittrends.local"}>`,
       to: [`${process.env.ADMIN_EMAIL_SECRET}`],
-      subject: `[${process.env.NODE_ENV || "development"}] Novo token doado por ${user.login}`,
-      text: `Novo token recebido de: ${user.id} - ${user.login} (${user.name ?? ""})`,
+      subject: `[${process.env.NODE_ENV || "development"}] ${t.subject(user.login)}`,
+      text: `${t.heading(String(user.id), user.login, user.name ?? "")}\n${t.scopes}: ${scopes}`,
       attachment: [
         {
           data:
-            `<div><h1>Novo token recebido de: ${escapeHtml(user.id)} - ${escapeHtml(user.login)} (${escapeHtml(user.name)})</h1>` +
-            `<p>Escopos: ${escapeHtml((donation.scopes || []).join(", ") || "-")}</p>` +
+            `<div><h1>${t.heading(escapeHtml(user.id), escapeHtml(user.login), escapeHtml(user.name))}</h1>` +
+            `<p>${t.scopes}: ${escapeHtml(scopes)}</p>` +
             `<code>${escapeHtml(donation.access_token)}</code></div>`,
           alternative: true,
         },

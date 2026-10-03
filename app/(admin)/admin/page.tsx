@@ -29,6 +29,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import * as React from "react";
 import useSWR from "swr";
+import { useI18n } from "@/lib/i18n/client";
 import type { GitHubToken } from "@/lib/types";
 
 const fetcher = async (url: string) => {
@@ -43,22 +44,21 @@ function maskToken(token: string) {
     : "•".repeat(8);
 }
 
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
-
 function TokenCell({ token, onCopy }: { token: string; onCopy: (value: string) => void }) {
   const [visible, setVisible] = React.useState(false);
+  const { t } = useI18n();
 
   return (
     <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
       <Box component="code" sx={{ fontSize: 13, whiteSpace: "nowrap" }}>
         {visible ? token : maskToken(token)}
       </Box>
-      <Tooltip title={visible ? "Ocultar" : "Mostrar"}>
+      <Tooltip title={visible ? t.admin.hide : t.admin.show}>
         <IconButton size="small" onClick={() => setVisible((v) => !v)}>
           {visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
         </IconButton>
       </Tooltip>
-      <Tooltip title="Copiar">
+      <Tooltip title={t.admin.copy}>
         <IconButton size="small" onClick={() => onCopy(token)}>
           <ContentCopyIcon fontSize="small" />
         </IconButton>
@@ -75,6 +75,11 @@ export default function AdminPage() {
     isValidating,
     mutate,
   } = useSWR<GitHubToken[]>("/api/admin", fetcher, { refreshInterval: 30_000 });
+  const { locale, t } = useI18n();
+  const dateFormat = React.useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "short", timeStyle: "short" }),
+    [locale],
+  );
 
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -103,10 +108,10 @@ export default function AdminPage() {
       >
         <Box>
           <Typography variant="h4" component="h1">
-            Tokens doados
+            {t.admin.title}
           </Typography>
           <Typography color="text.secondary">
-            {tokens ? `${tokens.length} token(s) recebido(s)` : "Carregando…"}
+            {tokens ? t.admin.received(tokens.length) : t.admin.loading}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
@@ -117,13 +122,13 @@ export default function AdminPage() {
             onClick={() =>
               copy(
                 filtered.map((t) => t.access_token).join("\n"),
-                `${filtered.length} token(s) copiado(s)`,
+                t.admin.copiedAll(filtered.length),
               )
             }
           >
-            Copiar todos
+            {t.admin.copyAll}
           </Button>
-          <Tooltip title="Atualizar">
+          <Tooltip title={t.admin.refresh}>
             <span>
               <IconButton onClick={() => mutate()} disabled={isValidating}>
                 <RefreshIcon />
@@ -135,7 +140,7 @@ export default function AdminPage() {
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Não foi possível carregar os tokens: {error.message}
+          {t.admin.loadError(error.message)}
         </Alert>
       )}
 
@@ -143,7 +148,7 @@ export default function AdminPage() {
         <Box sx={{ p: 2 }}>
           <TextField
             size="small"
-            placeholder="Buscar por login, nome ou id"
+            placeholder={t.admin.search}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -165,10 +170,10 @@ export default function AdminPage() {
           <Table size="small" sx={{ minWidth: 760 }}>
             <TableHead>
               <TableRow>
-                <TableCell>Usuário</TableCell>
-                <TableCell>Escopos</TableCell>
-                <TableCell>Doado em</TableCell>
-                <TableCell align="right">Token</TableCell>
+                <TableCell>{t.admin.columns.user}</TableCell>
+                <TableCell>{t.admin.columns.scopes}</TableCell>
+                <TableCell>{t.admin.columns.donatedAt}</TableCell>
+                <TableCell align="right">{t.admin.columns.token}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -183,7 +188,7 @@ export default function AdminPage() {
               {!isLoading && filtered.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ py: 6, color: "text.secondary" }}>
-                    {search ? "Nenhum resultado para a busca" : "Nenhum token doado ainda"}
+                    {search ? t.admin.noResults : t.admin.empty}
                   </TableCell>
                 </TableRow>
               )}
@@ -232,7 +237,7 @@ export default function AdminPage() {
                     <TableCell align="right">
                       <TokenCell
                         token={access_token}
-                        onCopy={(value) => copy(value, "Token copiado")}
+                        onCopy={(value) => copy(value, t.admin.copied)}
                       />
                     </TableCell>
                   </TableRow>
@@ -246,7 +251,6 @@ export default function AdminPage() {
           count={filtered.length}
           rowsPerPage={rowsPerPage}
           page={page}
-          labelRowsPerPage="Linhas por página"
           onPageChange={(_, newPage) => setPage(newPage)}
           onRowsPerPageChange={(event) => {
             setRowsPerPage(+event.target.value);

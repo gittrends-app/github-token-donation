@@ -16,9 +16,11 @@ import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import * as React from "react";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -56,15 +58,15 @@ export default function LoginPage() {
             <Stack spacing={1} sx={{ alignItems: "center" }}>
               <AdminPanelSettingsIcon color="primary" sx={{ fontSize: 48 }} />
               <Typography variant="h5" component="h1">
-                Admin
+                {t.login.title}
               </Typography>
             </Stack>
 
-            {error && <Alert severity="error">Invalid username or password</Alert>}
+            {error && <Alert severity="error">{t.login.invalid}</Alert>}
 
             <TextField
               name="user"
-              label="User"
+              label={t.login.user}
               autoComplete="username"
               required
               fullWidth
@@ -72,7 +74,7 @@ export default function LoginPage() {
             />
             <TextField
               name="password"
-              label="Password"
+              label={t.login.password}
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
@@ -82,7 +84,7 @@ export default function LoginPage() {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
                         onClick={() => setShowPassword((show) => !show)}
                         edge="end"
                       >
@@ -94,7 +96,7 @@ export default function LoginPage() {
               }}
             />
             <Button type="submit" variant="contained" size="large" loading={loading} fullWidth>
-              Login
+              {t.login.submit}
             </Button>
           </Stack>
         </CardContent>

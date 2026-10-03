@@ -2,6 +2,13 @@ import type { GitHubUser } from "@/lib/types";
 
 const GH_BASE_URL = "https://api.github.com/";
 
+// Server-only OAuth settings, read at runtime (no rebuild needed to change them)
+export const ghClientId = process.env.GH_CLIENT_ID || "";
+export const ghScopes = (process.env.GH_SCOPES || "public_repo,read:user")
+  .split(",")
+  .map((scope) => scope.trim())
+  .filter(Boolean);
+
 export async function getGithubProfile(
   token: string,
 ): Promise<{ user: GitHubUser; scopes: string[] }> {

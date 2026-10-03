@@ -15,14 +15,18 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import * as React from "react";
-import { messages } from "@/lib/messages";
+import { type Locale, localeLabels, locales } from "@/lib/i18n";
+import { setLocale } from "@/lib/i18n/actions";
+import { useI18n } from "@/lib/i18n/client";
 
 export const DRAWER_WIDTH = 260;
 
@@ -31,6 +35,8 @@ const REPOSITORY_URL = "https://github.com/gittrends-app/github-token-donation";
 const brandBackground = "linear-gradient(180deg, #2f7d7c 0%, #1f5b5a 100%)";
 
 function Brand() {
+  const { t } = useI18n();
+
   return (
     <Box
       component={Link}
@@ -48,15 +54,59 @@ function Brand() {
     >
       <Image src="/images/logo-white.png" alt="" width={72} height={72} priority />
       <Typography variant="h6" component="span" sx={{ fontWeight: 700, textAlign: "center" }}>
-        {messages.name}
+        {t.app.name}
       </Typography>
     </Box>
+  );
+}
+
+function LanguageSwitcher() {
+  const { locale, t } = useI18n();
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+
+  return (
+    <ToggleButtonGroup
+      exclusive
+      size="small"
+      value={locale}
+      disabled={pending}
+      aria-label={t.nav.language}
+      onChange={(_, value: Locale | null) => {
+        if (!value || value === locale) return;
+        startTransition(async () => {
+          await setLocale(value);
+          router.refresh();
+        });
+      }}
+      sx={{
+        alignSelf: "center",
+        "& .MuiToggleButton-root": {
+          color: "rgba(255,255,255,0.7)",
+          borderColor: "rgba(255,255,255,0.3)",
+          px: 1.5,
+          py: 0.25,
+          fontSize: 12,
+        },
+        "& .MuiToggleButton-root.Mui-selected": {
+          color: "#fff",
+          bgcolor: "rgba(255,255,255,0.18)",
+        },
+      }}
+    >
+      {locales.map((value) => (
+        <ToggleButton key={value} value={value} lang={value}>
+          {localeLabels[value]}
+        </ToggleButton>
+      ))}
+    </ToggleButtonGroup>
   );
 }
 
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const { t } = useI18n();
 
   const itemSx = {
     borderRadius: 2,
@@ -82,7 +132,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
             <HomeIcon />
           </ListItemIcon>
-          <ListItemText primary={messages.homeButton} />
+          <ListItemText primary={t.nav.home} />
         </ListItemButton>
         {session?.user && (
           <ListItemButton
@@ -95,7 +145,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
               <AdminPanelSettingsIcon />
             </ListItemIcon>
-            <ListItemText primary={messages.adminButton} />
+            <ListItemText primary={t.nav.admin} />
           </ListItemButton>
         )}
       </List>
@@ -108,7 +158,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
               <LogoutIcon />
             </ListItemIcon>
-            <ListItemText primary={messages.logoutButton} />
+            <ListItemText primary={t.nav.logout} />
           </ListItemButton>
         ) : (
           <ListItemButton
@@ -121,10 +171,11 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
             <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
               <LoginIcon />
             </ListItemIcon>
-            <ListItemText primary={messages.adminButton} />
+            <ListItemText primary={t.nav.admin} />
           </ListItemButton>
         )}
       </List>
+      <LanguageSwitcher />
       <Box
         component="a"
         href={REPOSITORY_URL}
@@ -150,6 +201,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function SideDrawer() {
   const [open, setOpen] = React.useState(false);
+  const { t } = useI18n();
 
   const paperSx = {
     width: DRAWER_WIDTH,
@@ -169,7 +221,7 @@ export default function SideDrawer() {
           <IconButton
             color="inherit"
             edge="start"
-            aria-label="Open menu"
+            aria-label={t.nav.openMenu}
             onClick={() => setOpen(true)}
             sx={{ mr: 1 }}
           >
@@ -177,7 +229,7 @@ export default function SideDrawer() {
           </IconButton>
           <Image src="/images/logo-white.png" alt="" width={32} height={32} />
           <Typography variant="subtitle1" component="span" sx={{ ml: 1.5, fontWeight: 700 }}>
-            {messages.name}
+            {t.app.name}
           </Typography>
         </Toolbar>
       </AppBar>

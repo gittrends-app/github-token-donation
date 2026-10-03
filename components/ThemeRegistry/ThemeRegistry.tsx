@@ -1,9 +1,11 @@
 "use client";
 import CssBaseline from "@mui/material/CssBaseline";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { enUS, ptBR } from "@mui/material/locale";
+import { createTheme, type ThemeOptions, ThemeProvider } from "@mui/material/styles";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter";
 import { Roboto } from "next/font/google";
-import type * as React from "react";
+import * as React from "react";
+import type { Locale } from "@/lib/i18n";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -12,7 +14,7 @@ const roboto = Roboto({
 });
 
 // Brand teal (#68b2b1) is too light for white text, so light mode uses a darker shade for contrast
-const theme = createTheme({
+const themeOptions: ThemeOptions = {
   cssVariables: true,
   colorSchemes: {
     light: {
@@ -42,9 +44,20 @@ const theme = createTheme({
     MuiCard: { defaultProps: { variant: "outlined" } },
     MuiPaper: { styleOverrides: { outlined: { borderRadius: 16 } } },
   },
-});
+};
 
-export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
+// MUI's own locale packs translate built-in texts (pagination labels, aria-labels, …)
+const muiLocales = { en: enUS, "pt-BR": ptBR };
+
+export default function ThemeRegistry({
+  locale,
+  children,
+}: {
+  locale: Locale;
+  children: React.ReactNode;
+}) {
+  const theme = React.useMemo(() => createTheme(themeOptions, muiLocales[locale]), [locale]);
+
   return (
     <AppRouterCacheProvider options={{ key: "mui" }}>
       <ThemeProvider theme={theme}>

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { ghClientId, ghScopes } from "@/helpers/github";
 import { OAUTH_STATE_COOKIE } from "@/lib/cookies";
-import { ghScopes } from "@/lib/messages";
 
 // Starts the GitHub OAuth flow with a random `state` to protect the callback against CSRF
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
 
   const url = new URL("https://github.com/login/oauth/authorize");
   url.search = new URLSearchParams({
-    client_id: process.env.GH_CLIENT_ID || process.env.NEXT_PUBLIC_GH_CLIENT_ID || "",
+    client_id: ghClientId,
     scope: ghScopes.join(","),
     state,
   }).toString();

@@ -15,8 +15,9 @@ import Typography from "@mui/material/Typography";
 import { cookies } from "next/headers";
 import Image from "next/image";
 import Alerta from "@/components/Alerta";
+import { ghClientId, ghScopes } from "@/helpers/github";
 import { DONATION_COOKIE, type DonationCookie } from "@/lib/cookies";
-import { describeScope, errorMessage, ghClientId, ghScopes, messages } from "@/lib/messages";
+import { getI18n } from "@/lib/i18n/server";
 
 function readDonation(value: string | undefined): DonationCookie | undefined {
   if (!value) return undefined;
@@ -34,7 +35,15 @@ export default async function HomePage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ error }, cookieStore] = await Promise.all([searchParams, cookies()]);
+  const [{ error }, cookieStore, { t }] = await Promise.all([searchParams, cookies(), getI18n()]);
+  // Widened for lookups by arbitrary query/scope strings; the dictionaries still enforce every key
+  const errors: Record<string, string> = t.alerts.errors;
+  const scopeLabels: Record<string, string> = t.scopes;
+  const errorText = error
+    ? Object.hasOwn(errors, error)
+      ? errors[error]
+      : errors.unexpected
+    : undefined;
   const donor = readDonation(cookieStore.get(DONATION_COOKIE)?.value);
   const revokeUrl = ghClientId
     ? `https://github.com/settings/connections/applications/${ghClientId}`
@@ -53,7 +62,7 @@ export default async function HomePage({
       }}
     >
       <Stack spacing={4}>
-        <Alerta donor={donor} error={errorMessage(error)} />
+        <Alerta t={t.alerts} donor={donor} error={errorText} />
 
         <Stack spacing={2}>
           <Typography
@@ -61,13 +70,13 @@ export default async function HomePage({
             color="primary"
             sx={{ fontWeight: 700, letterSpacing: 1.5 }}
           >
-            {messages.name}
+            {t.app.name}
           </Typography>
           <Typography variant="h3" component="h1" sx={{ fontSize: { xs: "2rem", md: "3rem" } }}>
-            {messages.title}
+            {t.home.title}
           </Typography>
           <Typography variant="h6" component="p" color="text.secondary" sx={{ fontWeight: 400 }}>
-            {messages.message}
+            {t.app.description}
           </Typography>
         </Stack>
 
@@ -80,7 +89,7 @@ export default async function HomePage({
             startIcon={<GitHubIcon />}
             sx={{ px: 4, py: 1.5, fontSize: "1.1rem" }}
           >
-            {messages.donateButton}
+            {t.home.donate}
           </Button>
         </Box>
 
@@ -89,7 +98,7 @@ export default async function HomePage({
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
               <LockOutlinedIcon color="primary" fontSize="small" />
               <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-                What we will be able to access
+                {t.home.accessTitle}
               </Typography>
             </Stack>
             <List dense disablePadding>
@@ -98,15 +107,17 @@ export default async function HomePage({
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     <CheckCircleOutlineIcon color="success" fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText primary={describeScope(scope)} secondary={<code>{scope}</code>} />
+                  <ListItemText
+                    primary={scopeLabels[scope] ?? scope}
+                    secondary={<code>{scope}</code>}
+                  />
                 </ListItem>
               ))}
             </List>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Tokens are only used for research data collection and are never shared. You can revoke
-              access at any time in your{" "}
+              {t.home.revokeNote}{" "}
               <Link href={revokeUrl} target="_blank" rel="noopener noreferrer">
-                GitHub settings
+                {t.home.revokeLink}
               </Link>
               .
             </Typography>
@@ -124,7 +135,7 @@ export default async function HomePage({
         <Box sx={{ width: { xs: 160, sm: 220, md: "100%" }, maxWidth: 380 }}>
           <Image
             src="/images/ghpet.png"
-            alt="Scientist Octocat"
+            alt={t.home.imageAlt}
             width={612}
             height={684}
             priority
