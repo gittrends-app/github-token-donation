@@ -3,7 +3,6 @@
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import HomeIcon from "@mui/icons-material/Home";
-import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import AppBar from "@mui/material/AppBar";
@@ -152,29 +151,17 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
       <Box sx={{ flexGrow: 1 }} />
 
-      <List>
-        {session?.user ? (
+      {/* The admin area is never linked publicly: admins reach /login directly */}
+      {session?.user && (
+        <List>
           <ListItemButton onClick={() => signOut({ callbackUrl: "/" })} sx={itemSx}>
             <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
               <LogoutIcon />
             </ListItemIcon>
             <ListItemText primary={t.nav.logout} />
           </ListItemButton>
-        ) : (
-          <ListItemButton
-            component={Link}
-            href="/login"
-            selected={pathname === "/login"}
-            onClick={onNavigate}
-            sx={{ ...itemSx, opacity: 0.8 }}
-          >
-            <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}>
-              <LoginIcon />
-            </ListItemIcon>
-            <ListItemText primary={t.nav.admin} />
-          </ListItemButton>
-        )}
-      </List>
+        </List>
+      )}
       <LanguageSwitcher />
       <Box
         component="a"
