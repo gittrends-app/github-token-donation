@@ -24,7 +24,7 @@
     "@mui/material": "^9.4.0",
     "@mui/material-nextjs": "^9.4.0",
     "emailjs": "^5.0.3",
-    "next": "^16.3.8",
+    "next": "^16.4.0",
     "next-auth": "^4.24.15",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
